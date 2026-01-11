@@ -1,61 +1,74 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHP</title>
-    <link rel="shortcut icon" href="https://avallong.com.br/assets/img/logocolorida.png" type="image/x-icon">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PHP</title>
+  <link rel="shortcut icon" href="https://avallong.com.br/assets/img/logocolorida.png" type="image/x-icon">
 </head>
 <body>
-    <h1>Projetos em Python, rodando no servidor do Render</h1>
-    <p id="server_status">Status: verificando servidor...</p>
-    
-    <input id="a" type="number" placeholder="A">
-    <input id="b" type="number" placeholder="B">
-    <button id="btn_somar" onclick="somar()" disabled>Somar</button>
+  <h1>Projetos em Python, rodando no servidor do Render</h1>
+  <p id="server_status">Status: verificando servidor...</p>
 
-<p id="resultado"></p>
+  <input id="a" type="number" placeholder="A">
+  <input id="b" type="number" placeholder="B">
+  <button id="btn_somar" onclick="somar()" disabled>Somar</button>
 
+  <p id="resultado"></p>
 
   <script>
-    const statusEl = document.getElementById("status");
-    const btn_somar = document.getElementById("btn_somar");
+    const statusEl = document.getElementById("server_status");
+    const btnSomar = document.getElementById("btn_somar");
 
-    function atualizarStatus(texto, cor){
-        statusEl.innerText = "Status: " + texto;
-        statusEl.style.color = color;
+    function atualizarStatus(texto, cor) {
+      statusEl.innerText = "Status: " + texto;
+      statusEl.style.color = cor;
     }
 
+    // Verifica backend ao carregar
     atualizarStatus("tentando ligar...", "orange");
-    // acorda o backend quando a página abrir
     fetch("https://avallong-python-backend.onrender.com/")
       .then(res => {
-        if (res.ok){
-        atualizarStatus("Servidor ON", "green");
-        btn_somar.disabled = false;
-      } else {
-        atualizarStatus("Servidor indisponível", "red");
-      }
-    });
-    .catch(() => {
+        if (res.ok) {
+          atualizarStatus("Servidor ON", "green");
+          btnSomar.disabled = false;
+        } else {
+          atualizarStatus("Servidor indisponível", "red");
+        }
+      })
+      .catch(() => {
         atualizarStatus("Servidor OFF", "red");
-    });
-        
+      });
+
     function somar() {
       const a = document.getElementById("a").value;
       const b = document.getElementById("b").value;
 
+      // Validação simples
+      if (a === "" || b === "") {
+        document.getElementById("resultado").innerText = "Preencha A e B.";
+        return;
+      }
+
+      btnSomar.disabled = true;
+      document.getElementById("resultado").innerText = "Calculando...";
+
       fetch(`https://avallong-python-backend.onrender.com/soma/${a}/${b}`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error("Resposta inválida do backend");
+          return res.json();
+        })
         .then(data => {
-          document.getElementById("resultado").innerText =
-            "Resultado: " + data.resultado;
+          document.getElementById("resultado").innerText = "Resultado: " + data.resultado;
+          atualizarStatus("Servidor ON", "green");
         })
         .catch(err => {
-          document.getElementById("resultado").innerText =
-            "Erro ao chamar o backend";
-            atualizarStatus("Servidor OFF", "red");
+          document.getElementById("resultado").innerText = "Erro ao chamar o backend";
+          atualizarStatus("Servidor OFF", "red");
           console.error(err);
+        })
+        .finally(() => {
+          btnSomar.disabled = false;
         });
     }
   </script>
